@@ -1,0 +1,4 @@
+Faker==40.39.0
+kafka-python-ng==2.2.3
+py4j==0.10.9.9
+pyspark==4.2.0

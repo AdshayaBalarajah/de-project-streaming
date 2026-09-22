@@ -1,0 +1,9 @@
+cd ~/de-project-streaming
+cat > .gitignore << 'EOF'
+venv/
+.ivy2/
+__pycache__/
+*.log
+derby.log
+metastore_db/
+EOF
