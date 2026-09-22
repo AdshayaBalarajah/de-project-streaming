@@ -10,17 +10,18 @@ for handling late-arriving data.
 
 ## Architecture
 
+```
 Python event generator (producer.py)
-↓
+         ↓
 Redpanda (Kafka-compatible broker) — "orders" topic
-↓
+         ↓
 Spark Structured Streaming (spark_aggregator.py)
-
-reads the stream
-groups events into 10-second windows, per region
-applies a watermark to tolerate late data
-↓
+  - reads the stream
+  - groups events into 10-second windows, per region
+  - applies a watermark to tolerate late data
+         ↓
 DuckDB table (streaming_results.duckdb) — queryable rolling aggregates
+```
 
 
 - **Ingestion**: `producer.py` generates realistic fake order events
