@@ -20,7 +20,7 @@ reads the stream
 groups events into 10-second windows, per region
 applies a watermark to tolerate late data
 ↓
-Rolling aggregated totals, printed to console
+DuckDB table (streaming_results.duckdb) — queryable rolling aggregates
 
 
 - **Ingestion**: `producer.py` generates realistic fake order events
@@ -45,13 +45,16 @@ Rolling aggregated totals, printed to console
 
 ## Example output
 
-+------------------------------------------+------+------------+-----------+
-|window |region|total_amount|order_count|
-+------------------------------------------+------+------------+-----------+
-|{14:21:10, 14:21:20} |North |494.45 |1 |
-|{14:21:10, 14:21:20} |East |419.71 |3 |
-|{14:21:10, 14:21:20} |South |294.31 |2 |
-+------------------------------------------+------+------------+-----------+
+Spark writes windowed results into a local DuckDB table (`streaming_results.duckdb`),
+queryable directly with SQL:
+
+```
+   window_start          window_end            region  total_amount  order_count
+0  2026-09-22 18:37:50   2026-09-22 18:38:00    North   254.40        1
+1  2026-09-22 18:37:50   2026-09-22 18:38:00    South   643.93        2
+2  2026-09-22 18:37:40   2026-09-22 18:37:50    West    170.35        1
+3  2026-09-22 18:37:40   2026-09-22 18:37:50    North   436.54        1
+```
 
 
 ## Tech stack
@@ -84,9 +87,8 @@ python3 spark_aggregator.py
 
 ## What I'd change for a production version
 
-- Sink aggregated results into a real table (e.g. a warehouse or Postgres)
-  instead of printing to console, so results are queryable rather than
-  ephemeral
+- Swap the DuckDB sink for a proper cloud warehouse or Postgres for
+  multi-user, concurrent access
 - Add checkpointing so Spark can recover cleanly from a restart without
   reprocessing or losing data
 - Run Redpanda with multiple partitions and Spark with parallel processing,

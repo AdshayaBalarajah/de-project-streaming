@@ -40,10 +40,33 @@ windowed_totals = orders \
         count("*").alias("order_count")
     )
 
+def write_to_duckdb(batch_df, batch_id):
+    import duckdb
+    pandas_df = batch_df.toPandas()
+    if pandas_df.empty:
+        return
+    con = duckdb.connect("streaming_results.duckdb")
+    con.execute("""
+        CREATE TABLE IF NOT EXISTS windowed_orders (
+            window_start TIMESTAMP,
+            window_end TIMESTAMP,
+            region VARCHAR,
+            total_amount DOUBLE,
+            order_count BIGINT
+        )
+    """)
+    pandas_df["window_start"] = pandas_df["window"].apply(lambda w: w["start"])
+    pandas_df["window_end"] = pandas_df["window"].apply(lambda w: w["end"])
+    con.executemany(
+        "INSERT INTO windowed_orders VALUES (?, ?, ?, ?, ?)",
+        pandas_df[["window_start", "window_end", "region", "total_amount", "order_count"]].values.tolist()
+    )
+    con.close()
+    print(f"Batch {batch_id}: wrote {len(pandas_df)} rows to streaming_results.duckdb")
+
 query = windowed_totals.writeStream \
     .outputMode("update") \
-    .format("console") \
-    .option("truncate", False) \
+    .foreachBatch(write_to_duckdb) \
     .start()
 
 query.awaitTermination()
