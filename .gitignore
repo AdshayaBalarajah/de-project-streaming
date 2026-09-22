@@ -6,4 +6,4 @@ __pycache__/
 *.log
 derby.log
 metastore_db/
-EOF
+EOF*.duckdb
